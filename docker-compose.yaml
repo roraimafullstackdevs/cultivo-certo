@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123456 
-      POSTGRES_DB: agente-sql
+      POSTGRES_DB: expoferr
       SHARED_BUFFERS: 12GB
       WORK_MEM: 1GB
       EFFECTIVE_CACHE_SIZE: 12GB
