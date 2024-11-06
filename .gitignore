@@ -1,2 +1,3 @@
 .venv
 */gcp_account_service.json
+.env
