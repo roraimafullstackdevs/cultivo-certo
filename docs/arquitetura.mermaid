@@ -1,0 +1,64 @@
+graph TD;
+    subgraph Frontend
+        Streamlit[Streamlit]
+        Dashboard[Dashboard]
+        MapSection[Map Section]
+    end
+
+    subgraph Backend
+        subgraph LLM_Agent
+            LLM[Large Language Model]
+        end
+
+        subgraph RAG
+            RAG_Process[Retrieval Augmented Generation]
+            NoSQL_DB[(NoSQL Database)]
+        end
+
+        subgraph SQL_Agent
+            LangChain_Process[LangChain]
+            SQL_DB[(SQL Database)]
+        end
+
+        subgraph Alert_System
+            RandomForest[RandomForest Model]
+            Alert_Service[Alert Service]
+        end
+    end
+
+    subgraph Data_Persistence
+        NoSQL_DataBase[(NoSQL DB)]
+        SQL_DataBase[(SQL DB)]
+    end
+
+    subgraph DataFlow
+        NoSQL_Flow[(NoSQL Flow)]
+        SQL_Flow[(SQL Flow)]
+    end
+
+    Streamlit --> |Uses| Dashboard
+    Streamlit --> |Uses| MapSection
+
+    Dashboard --> |Fetch Data| NoSQL_DataBase
+    Dashboard --> |Plots Data| PlotSection[(Plot Section)]
+    MapSection --> |Fetch Data| NoSQL_DataBase
+    MapSection --> |Generates Points| MapPoints[(Map Points)]
+
+    LLM_Agent --> |Interacts with| RAG_Process
+    RAG_Process --> |Retrieves Data| NoSQL_DataBase
+    RAG_Process --> |Sends Data| LLM
+    LLM --> |Processes and Responds| RAG_Process
+
+    SQL_Agent --> |Executes Queries| LangChain_Process
+    LangChain_Process --> |Queries| SQL_DataBase
+    LangChain_Process --> |Fetches Data| SQL_DB
+
+    Alert_System --> |Uses Data| RandomForest
+    RandomForest --> |Predicts| Alert_Service
+    Alert_Service --> |Sends Alerts| AlertOutput((Alert Output))
+
+    NoSQL_Flow --> |Sends Data| Alert_Service
+    SQL_Flow --> |Sends Data| Alert_Service
+
+    Data_Persistence --> |Stores and Retrieves| NoSQL_DataBase
+    Data_Persistence --> |Stores and Retrieves| SQL_DataBase
