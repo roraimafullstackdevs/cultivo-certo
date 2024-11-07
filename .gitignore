@@ -2,3 +2,4 @@
 */gcp_account_service.json
 .env
 *.pyc
+__pycache__

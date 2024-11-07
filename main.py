@@ -1,82 +1,92 @@
-
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
-import src.agente as agente
 import streamlit as st
-from langchain_core.messages import HumanMessage, BaseMessage, AIMessage
-from langchain.memory import ConversationBufferMemory
-
-# Initialize the SQL agent
-sql_agent = agente.agente_alive()
-
-# Initialize the session state for memory if not already present
-if "memory" not in st.session_state:
-    st.session_state["memory"] = ConversationBufferMemory(k=10,memory_key="chat_history", return_messages=True)
-    
+import src.st_chat as st_chat
+import src.st_analytics as st_analytics
+import src.st_maps as st_maps
+import src.st_alerta as st_alerta
+import src.st_previsoes as st_previsoes
 
 
-def convert_message_to_model_message(msg):
-    """Convert a message dictionary to a model-specific message instance."""
-    if msg["role"] == "user":
-        return HumanMessage(content=msg["content"])
-    elif msg["role"] == "assistant":
-        return AIMessage(content=msg["content"])
-    else:
-        return None
 
-def interface():
-    st.title("💬 Huawei AI Chatbot")
-    st.caption("🚀 IA Generativa para auxiliar nossos clientes")
-    
-    if "messages" not in st.session_state:
-        st.session_state["messages"] = [{"role": "assistant", "content": "Como posso lhe ajudar?"}]
 
-    # Display chat history
-    for msg in st.session_state["messages"]:
-        if msg["role"] == "assistant":
-            st.chat_message("assistant").write(msg["content"])
-        else:
-            st.chat_message("user").write(msg["content"])
+# Caminho para a logo
+logo_path = os.path.join(os.path.dirname(__file__), 'images/icon.png')
 
-    # Handle new input
-    if prompt := st.chat_input():
-        # Create a new message for the user's input
-        user_message = {"role": "user", "content": prompt}
-        st.session_state["messages"].append(user_message)
-        
-        # Display the new user message immediately
-        st.chat_message("user").write(user_message["content"])
-        
-        if sql_agent:
-            try:
-                # Ensure the historical messages are correctly formatted
-                historical_messages = [
-                    convert_message_to_model_message(msg) for msg in st.session_state["messages"]
-                ]
-                
-                # Invoke the agent with the full conversation history
-                result = sql_agent.invoke(
-                    {"messages": historical_messages},
-                    {"recursion_limit": 100}
-                )
-                
-                assistant_response = result["messages"][-1].content if result["messages"] else "I couldn't process your request."
-                assistant_message = {"role": "assistant", "content": assistant_response}
-                
-                # Append the response to the message history
-                st.session_state["messages"].append(assistant_message)
+st_chat.inicia_memoria()
 
-                # Save the conversation context into the memory
-                st.session_state["memory"].save_context({"input": prompt}, {"output": assistant_response})
-                
-                # Display the result
-                st.chat_message("assistant").write(assistant_response)
-            except Exception as e:
-                st.chat_message("assistant").write(f"Error: {str(e)}")
-        else:
-            st.chat_message("assistant").write("Agent is not initialized!")
+# Inicializa o estado com a página padrão sendo o Chatbot
+if "selected_page" not in st.session_state:
+    st.session_state.selected_page = "Chatbot"
 
-if __name__ == "__main__":
-    interface()
+# CSS para padronizar o tamanho e a cor dos botões
+st.markdown(f"""
+    <style>
+    .stButton>button {{
+        width: 100%;
+        margin-bottom: 10px;
+        height: 50px;
+        border: none;
+        border-radius: 5px;
+    }}
+    .stButton>button[data-baseweb] {{
+        background-color: #4CAF50; /* Green */
+        color: white;
+    }}
+    #chatbot_button > button {{
+        background-color: {'#45a049' if st.session_state.selected_page == 'Chatbot' else '#4CAF50'};
+    }}
+    #analytics_button > button {{
+        background-color: {'#1E90FF' if st.session_state.selected_page == 'Análise de Dados' else '#008CBA'};
+    }}
+    #maps_button > button {{
+        background-color: {'#FF8C00' if st.session_state.selected_page == 'Mapas' else '#FFA500'};
+    }}
+    .stButton>button:hover {{
+        filter: brightness(85%);
+        cursor: pointer;
+    }}
+    </style>
+""", unsafe_allow_html=True)
+
+# st.sidebar.title("Menu")
+
+# Adiciona a logo acima das opções
+st.sidebar.image(logo_path, use_column_width=True)
+
+# Lógica dos botões na barra lateral
+chatbot_selected = st.sidebar.button("Chatbot", key="chatbot_button")
+analytics_selected = st.sidebar.button("Análise de Dados", key="analytics_button")
+maps_selected = st.sidebar.button("Mapas", key="maps_button")
+alerta_selected = st.sidebar.button("Alertas", key="alerta_button")
+previsao_selected = st.sidebar.button("Previsão", key="previsao_button")
+
+
+
+# Atualiza o estado da página selecionada
+if chatbot_selected:
+    st.session_state.selected_page = "Chatbot"
+elif analytics_selected:
+    st.session_state.selected_page = "Análise de Dados"
+elif maps_selected:
+    st.session_state.selected_page = "Mapas"
+elif alerta_selected:
+    st.session_state.selected_page = "Alertas"
+elif previsao_selected:
+    st.session_state.selected_page = "Previsão"
+
+
+
+# Exibe a página selecionada
+if st.session_state.selected_page == "Chatbot":
+    st_chat.interface()
+elif st.session_state.selected_page == "Análise de Dados":
+    st_analytics.pagina_analise_dados()
+elif st.session_state.selected_page == "Mapas":
+    st_maps.pagina_mapas()
+elif st.session_state.selected_page == "Alertas":
+    st_alerta.pagina_alertas()
+elif st.session_state.selected_page == "Previsão":
+    st_previsoes.pagina_previsoes()
